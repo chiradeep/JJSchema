@@ -171,9 +171,9 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
                         break;
                     }
                 }
-                if (!hasField) {
+                /*if (!hasField) {
                     props.put(method, null);
-                }
+                }*/
             }
         }
         return props;
@@ -184,12 +184,15 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
     }
 
     private String getNameFromGetter(final Method getter) {
-        String[] getterPrefixes = {"get", "is"};
+        String[] getterPrefixes = {"get", "is", "get_"};
         String methodName = getter.getName();
         String fieldName = null;
         for (String prefix : getterPrefixes) {
             if (methodName.startsWith(prefix)) {
                 fieldName = methodName.substring(prefix.length());
+                if (fieldName.equalsIgnoreCase("")) { //handle case where method is simply "get"
+                    return null;
+                }
             }
         }
 
