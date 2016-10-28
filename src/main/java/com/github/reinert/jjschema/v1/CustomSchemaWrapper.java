@@ -28,6 +28,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.Arrays;
+
 
 /**
  * @author Danilo Reinert
@@ -135,8 +137,10 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
     protected void processProperties() {
         HashMap<Method, Field> properties = findProperties();
         for (Entry<Method, Field> prop : properties.entrySet()) {
+            String[] enums = getEnumsForField(prop.getValue());
+            boolean readonly = !hasSetMethod(prop.getKey());
             PropertyWrapper propertyWrapper = new PropertyWrapper(this, managedReferences, 
-                    prop.getKey(), prop.getValue());
+                    prop.getKey(), prop.getValue(), enums, readonly);
             if (!propertyWrapper.isEmptyWrapper())
                 addProperty(propertyWrapper);
         }
@@ -177,7 +181,7 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
                 boolean hasField = false;
                 for (Field field : fields) {
                     String name = getNameFromGetter(method);
-                    if (field.getName().equalsIgnoreCase(name) && hasSetMethod(method)) {
+                    if (field.getName().equalsIgnoreCase(name)) {
                         props.put(method, field);
                         hasField = true;
                         break;
@@ -221,6 +225,26 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
 
     protected void setRequired(boolean required) {
         this.required = required;
+    }
+
+    private String[] getEnumsForField(Field field) {
+        Class[] classes = getJavaType().getDeclaredClasses();
+        String enumName = "$" + field.getName() + "Enum";
+        List<String> enums = new ArrayList<String>();
+        try {
+            for (Class clz : classes ) {
+                if (clz.getName().endsWith(enumName)){
+                    Field[] enumFields = clz.getDeclaredFields();
+                    for (Field eF : enumFields) {
+                        enums.add((String)eF.get(null));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Caught exception " + e.getMessage() + " while getting enum");
+        }
+
+        return enums.toArray(new String[0]);
     }
 
     protected void processAttributes(ObjectNode node, Class<?> type) {

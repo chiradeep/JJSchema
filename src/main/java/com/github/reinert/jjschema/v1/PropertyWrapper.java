@@ -51,8 +51,10 @@ public class PropertyWrapper extends SchemaWrapper {
     boolean required;
     ManagedReference managedReference;
     ReferenceType referenceType;
+    String [] enums;
+    boolean readonly;
 
-    public PropertyWrapper(CustomSchemaWrapper ownerSchemaWrapper, Set<ManagedReference> managedReferences, Method method, Field field) {
+    public PropertyWrapper(CustomSchemaWrapper ownerSchemaWrapper, Set<ManagedReference> managedReferences, Method method, Field field, String[] enums, boolean readonly) {
         super(null);
 
         if (method == null)
@@ -61,6 +63,8 @@ public class PropertyWrapper extends SchemaWrapper {
         this.ownerSchemaWrapper = ownerSchemaWrapper;
         this.field = field;
         this.method = method;
+        this.enums = enums;
+        this.readonly = readonly;
 
 
 
@@ -127,6 +131,9 @@ public class PropertyWrapper extends SchemaWrapper {
             processAttributes(getNode(), getAccessibleObject());
             processNullable();
         }
+    }
+    public PropertyWrapper(CustomSchemaWrapper ownerSchemaWrapper, Set<ManagedReference> managedReferences, Method method, Field fields) {
+        this(ownerSchemaWrapper, managedReferences, method, fields, new String[]{}, false);
     }
 
     public Field getField() {
@@ -309,6 +316,15 @@ public class PropertyWrapper extends SchemaWrapper {
             if (attributes.readonly()) {
                 node.put("readonly", true);
             }
+        }
+        if (this.enums.length > 0) {
+           ArrayNode enumArray = node.putArray("enum");
+           for (String v : this.enums) {
+                enumArray.add(v);
+           }
+        }
+        if (this.readonly) {
+           node.put("readonly", true);
         }
     }
 
