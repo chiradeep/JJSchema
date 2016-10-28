@@ -142,6 +142,18 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
         }
     }
 
+    private boolean hasSetMethod(Method getMethod) {
+        Method[] methods = getJavaType().getMethods();
+        String setMethodName = getMethod.getName().replaceFirst("get", "set");
+        for (Method method: methods) {
+            if (method.getName().equalsIgnoreCase(setMethodName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     private HashMap<Method, Field> findProperties() {
         Field[] fields = getJavaType().getDeclaredFields();
         Method[] methods = getJavaType().getMethods();
@@ -165,7 +177,7 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
                 boolean hasField = false;
                 for (Field field : fields) {
                     String name = getNameFromGetter(method);
-                    if (field.getName().equalsIgnoreCase(name)) {
+                    if (field.getName().equalsIgnoreCase(name) && hasSetMethod(method)) {
                         props.put(method, field);
                         hasField = true;
                         break;
@@ -179,9 +191,11 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
         return props;
     }
 
+
     private boolean isGetter(final Method method) {
         return method.getName().startsWith("get") || method.getName().startsWith("is");
     }
+
 
     private String getNameFromGetter(final Method getter) {
         String[] getterPrefixes = {"get", "is", "get_"};
@@ -203,6 +217,7 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
         fieldName = fieldName.substring(0, 1).toLowerCase() + fieldName.substring(1);
         return fieldName;
     }
+
 
     protected void setRequired(boolean required) {
         this.required = required;
@@ -267,6 +282,5 @@ public class CustomSchemaWrapper extends SchemaWrapper implements Iterable<Prope
             if (attributes.readonly()) {
             	node.put("readonly", attributes.readonly());
             }
-        }
-    }
+        } }
 }
